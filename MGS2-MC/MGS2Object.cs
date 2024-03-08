@@ -234,12 +234,7 @@ namespace MGS2_MC
             //can't seem to easily find the bytes that control that though :(
             //TODO: for some reason this just... doesn't work as intended for the first set of toggling. O_o
             if (currentAmmo <= 0 && shouldBeEnabled)
-            {
-                if (LastKnownCurrentAmmo != 0)
-                    UpdateCurrentAmmoCount(LastKnownCurrentAmmo);
-                else
-                    UpdateCurrentAmmoCount(1);
-            }
+                UpdateCurrentAmmoCount(LastKnownCurrentAmmo != 0 ? LastKnownCurrentAmmo : 1);
             else if(!shouldBeEnabled)
             {
                 LastKnownCurrentAmmo = currentAmmo;

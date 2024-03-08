@@ -42,11 +42,11 @@ namespace MGS2_MC
         static extern bool GetWindowRect(IntPtr hWnd, out Rectangle lpRect);*/ //this may be useful for slapping the GUI on top of MGS2
         #endregion
 
-        private const string loggerName = "MGS2MonitorDebuglog.log";
+        private const string LOGGER_NAME = "MGS2MonitorDebuglog.log";
 
         static MGS2Monitor()
         {
-            _logger = Logging.InitializeNewLogger(loggerName);
+            _logger = Logging.InitializeNewLogger(LOGGER_NAME);
             _logger.Information($"MGS2 Monitor for version {Program.AppVersion} initialized...");
             _logger.Verbose($"Instance ID: {Program.InstanceID}");
         }
