@@ -44,11 +44,18 @@ namespace MGS2_MC
 
         private const string LOGGER_NAME = "MGS2MonitorDebuglog.log";
 
+        private static bool _externallyLaunchedMgs2 = false;
+
         static MGS2Monitor()
         {
             _logger = Logging.InitializeNewLogger(LOGGER_NAME);
             _logger.Information($"MGS2 Monitor for version {Program.AppVersion} initialized...");
             _logger.Verbose($"Instance ID: {Program.InstanceID}");
+
+            //--- Check for a externally launched MGS2 Process and set flags accordingly ---//
+            Process check = MGS2MemoryManager.GetMgs2Process();
+            if (check != null)
+                _externallyLaunchedMgs2 = true;
         }
 
         public static Process MGS2Process { get; set; }
@@ -89,7 +96,7 @@ namespace MGS2_MC
 
         private static bool IsDirectLaunchEnabled(FileInfo steamAppIdFile)
         {
-            if (steamAppIdFile.Exists)
+            if (steamAppIdFile.Exists && !_externallyLaunchedMgs2)
             {
                 try
                 {
@@ -112,6 +119,12 @@ namespace MGS2_MC
 
         private static void EnableDirectLaunch(FileInfo steamAppIdFile)
         {
+            //--- If an Externally launched MGS2 is detected, just return here ---//
+            if (_externallyLaunchedMgs2)
+            {
+                _logger.Information(@"Externally launched MGS2 detected, no need to Direct Launch");
+                return;
+            }
             try
             {
                 //the steam_appid file is either missing, or has incorrect contents. overwrite it so we can direct launch w/o issue.
@@ -135,21 +148,25 @@ namespace MGS2_MC
             //in your processor going under the load of 3 copies of MGS2... Not great. Can be fixed through adjusting malware
             //settings, but that's not a great solution. i need to reevaluate whether or not i absolutely NEED to be monitoring
             //MGS2 like a hawk like we are now, simply for the closing events...
-            ProcessStartInfo mgs2StartInfo = new ProcessStartInfo(mgs2Location)
+            //--- If no Externally launched MGS2 programs detected, continue like always ---//
+            if (!_externallyLaunchedMgs2)
             {
-                WorkingDirectory = mgs2Directory,
-                UseShellExecute = false,
-                CreateNoWindow = false,
-            };
-            MGS2Process.StartInfo = mgs2StartInfo;
-            try
-            {
-                MGS2Process.Start();
-            }
-            catch (Exception e)
-            {
-                _logger.Error($"Failed to start MGS2: {e}");
-                throw new AggregateException("Failed to start MGS2.", e);
+                ProcessStartInfo mgs2StartInfo = new ProcessStartInfo(mgs2Location)
+                {
+                    WorkingDirectory = mgs2Directory,
+                    UseShellExecute = false,
+                    CreateNoWindow = false,
+                };
+                MGS2Process.StartInfo = mgs2StartInfo;
+                try
+                {
+                    MGS2Process.Start();
+                }
+                catch (Exception e)
+                {
+                    _logger.Error($"Failed to start MGS2: {e}");
+                    throw new AggregateException("Failed to start MGS2.", e);
+                }
             }
 
             if (TrainerConfig.CloseGameWithTrainer)
@@ -174,9 +191,7 @@ namespace MGS2_MC
             }
 
             if (TrainerConfig.CloseTrainerWithGame)
-            {
                 Application.Exit();
-            }
 
             try
             {
@@ -198,6 +213,13 @@ namespace MGS2_MC
                 return;
             }
             _initialLaunch = false;
+
+            if (_externallyLaunchedMgs2)
+            {
+                _logger.Information(@"Externally launched MGS2 program detected, skipping the" 
+                    + " of the EnableMonitor() method");
+                return;
+            }
 
             MGS2Process = new Process();
             try

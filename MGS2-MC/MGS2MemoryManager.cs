@@ -223,7 +223,7 @@ namespace MGS2_MC
             }
         }
         
-        private static Process GetMgs2Process()
+        public static Process GetMgs2Process()
         {
             Process[] processes = Process.GetProcesses();
             foreach (Process p in processes)
@@ -231,7 +231,7 @@ namespace MGS2_MC
                 if(string.Equals(p.ProcessName, Constants.MGS2_PROCESS_NAME, StringComparison.CurrentCultureIgnoreCase))
                     return Process.GetProcessById(p.Id);
             }
-            return new Process();
+            return null;
         }
 
         private static int[] GetPlayerOffsets()
@@ -241,7 +241,8 @@ namespace MGS2_MC
              * and it's not throwing any errors either. I had to hard code the Process
              * to MGS2Monitor.MGS2Process and it works, at least on my machine fine
              */
-            if (counter++ == 0)
+            Process check = GetMgs2Process();
+            if (counter++ == 0 && check != null)
                 MGS2Monitor.MGS2Process = GetMgs2Process();
             
             using (SimpleProcessProxy proxy = new SimpleProcessProxy(MGS2Monitor.MGS2Process))
